@@ -10,17 +10,20 @@ from typing import Any, Dict, List, Optional
 
 try:
     from backend.app.indexing.inverted_index import AVLInvertedIndex
+    from backend.app.data_structures.trie import Trie
 except ModuleNotFoundError:
     from app.indexing.inverted_index import AVLInvertedIndex
+    from app.data_structures.trie import Trie
 
 
 class ProductCatalog:
-    """In-memory catalogue storing product records and the AVL inverted index."""
+    """In-memory catalogue storing product records, the AVL inverted index, and prefix Trie."""
 
     def __init__(self, data_path: Optional[Path] = None):
         self.data_path: Path = data_path or self._resolve_data_path()
         self.products_by_id: Dict[str, Dict[str, Any]] = {}
         self.inverted_index: AVLInvertedIndex = AVLInvertedIndex()
+        self.trie: Trie = Trie()
         self._load_and_index()
 
     @staticmethod
@@ -34,7 +37,7 @@ class ProductCatalog:
         return data_file
 
     def _load_and_index(self) -> None:
-        """Read products.json and construct the in-memory AVL inverted index."""
+        """Read products.json and construct the in-memory AVL inverted index and Trie."""
         if not self.data_path.exists():
             return
 
@@ -44,11 +47,26 @@ class ProductCatalog:
         for item in items:
             product_id = item["id"]
             self.products_by_id[product_id] = item
+            title = item.get("title", "").strip()
+            desc = item.get("description", "").strip()
+
             self.inverted_index.index_product(
                 doc_id=product_id,
-                title=item.get("title", ""),
-                description=item.get("description", "")
+                title=title,
+                description=desc
             )
+
+            # Feed product title into Trie with higher priority
+            if title:
+                self.trie.insert(title.lower(), payload={"title": title.lower(), "frequency": 10})
+
+        # Feed all unique vocabulary tokens from inverted index into Trie
+        for term in self.inverted_index.get_vocabulary():
+            self.trie.insert(term.lower(), payload={"title": term.lower(), "frequency": 1})
+
+    def suggest(self, prefix: str, limit: int = 5) -> List[str]:
+        """Provide real-time prefix completion suggestions using the Trie in O(L) time."""
+        return self.trie.search_prefix(prefix=prefix, limit=limit)
 
     def get_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
         """Look up product details by unique product ID in O(1) time."""

@@ -61,6 +61,7 @@ async function checkBackendHealth() {
  * and render the resulting product cards.
  */
 async function handleSearch() {
+  closeAutocomplete();
   const query = searchInput.value.trim();
   const category = categoryFilter.value;
   const minPrice = minPriceInput.value;
@@ -270,32 +271,119 @@ productModal.addEventListener("click", (e) => {
   }
 });
 
-// Close modal on Escape key
+// Close modal or autocomplete on Escape key
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !productModal.classList.contains("hidden")) {
-    closeModal();
+  if (e.key === "Escape") {
+    if (autocompleteBox && !autocompleteBox.classList.contains("hidden")) {
+      closeAutocomplete();
+    } else if (productModal && !productModal.classList.contains("hidden")) {
+      closeModal();
+    }
+  }
+});
+
+// Close autocomplete dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (
+    autocompleteBox &&
+    !autocompleteBox.classList.contains("hidden") &&
+    !searchInput.contains(e.target) &&
+    !autocompleteBox.contains(e.target)
+  ) {
+    closeAutocomplete();
   }
 });
 
 // ============================================================================
-// 4. AUTOCOMPLETE & RECOMMENDATIONS (PLACEHOLDERS)
+// 4. AUTOCOMPLETE SUGGESTIONS (POWERED BY TRIE)
 // ============================================================================
+let autocompleteDebounceTimer = null;
+
+function closeAutocomplete() {
+  if (autocompleteBox) {
+    autocompleteBox.classList.add("hidden");
+    autocompleteBox.innerHTML = "";
+  }
+}
+
+/**
+ * Debounced input handler (250ms) for prefix suggestions.
+ */
 function handleAutocomplete(event) {
   const prefix = event.target.value.trim();
+  clearTimeout(autocompleteDebounceTimer);
+
   if (!prefix) {
-    autocompleteBox.classList.add("hidden");
+    closeAutocomplete();
     return;
   }
-  // Autocomplete will be plugged into Trie in Milestone 2
+
+  autocompleteDebounceTimer = setTimeout(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/suggest?prefix=${encodeURIComponent(prefix)}&limit=5`);
+      if (!response.ok) {
+        closeAutocomplete();
+        return;
+      }
+
+      const data = await response.json();
+      const suggestions = data.suggestions || [];
+      renderAutocompleteSuggestions(suggestions);
+    } catch (err) {
+      console.error("Autocomplete fetch error:", err);
+      closeAutocomplete();
+    }
+  }, 250);
+}
+
+/**
+ * Render suggestion items in the autocomplete dropdown.
+ */
+function renderAutocompleteSuggestions(suggestions) {
+  if (!suggestions || suggestions.length === 0) {
+    closeAutocomplete();
+    return;
+  }
+
+  autocompleteBox.innerHTML = "";
+  suggestions.forEach((item) => {
+    const itemEl = document.createElement("div");
+    itemEl.className = "autocomplete-item";
+    itemEl.setAttribute("role", "button");
+    itemEl.setAttribute("tabindex", "0");
+    itemEl.textContent = item;
+
+    const selectSuggestion = () => {
+      searchInput.value = item;
+      closeAutocomplete();
+      handleSearch();
+    };
+
+    itemEl.addEventListener("click", selectSuggestion);
+    itemEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        selectSuggestion();
+      }
+    });
+
+    autocompleteBox.appendChild(itemEl);
+  });
+
+  autocompleteBox.classList.remove("hidden");
 }
 
 // ============================================================================
 // 5. EVENT LISTENERS & INITIALIZATION
 // ============================================================================
-searchBtn.addEventListener("click", handleSearch);
+searchBtn.addEventListener("click", () => {
+  closeAutocomplete();
+  handleSearch();
+});
 
 searchInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
+    closeAutocomplete();
     handleSearch();
   }
 });
@@ -312,7 +400,7 @@ resetFiltersBtn.addEventListener("click", () => {
   availabilityFilter.checked = false;
   sortSelect.value = "relevance";
   searchInput.value = "";
-  autocompleteBox.classList.add("hidden");
+  closeAutocomplete();
   handleSearch();
 });
 

@@ -79,20 +79,24 @@ def get_product(id: str) -> dict:
     return product
 
 
-@router.get("/suggest", summary="Prefix Autocomplete Suggestions (Placeholder)")
+@router.get("/suggest", summary="Prefix Autocomplete Suggestions")
 def autocomplete_suggestions(
-    prefix: str = Query(..., min_length=1, description="Prefix string to search suggestions for"),
+    prefix: Optional[str] = Query(None, description="Prefix string to search suggestions for"),
     limit: int = Query(5, ge=1, le=20, description="Max suggestions to return"),
 ) -> dict:
-    """Provide real-time prefix completion suggestions.
+    """Provide real-time prefix completion suggestions backed by Trie (Prefix Tree)."""
+    if prefix is None or not prefix.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Query parameter 'prefix' must not be empty."
+        )
 
-    To be implemented using:
-    - Trie (Prefix Tree) data structure
-    """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Autocomplete suggestions endpoint is not implemented yet. Implementation pending Trie data structure."
-    )
+    catalog = get_catalog()
+    suggestions = catalog.suggest(prefix=prefix.strip(), limit=limit)
+    return {
+        "prefix": prefix,
+        "suggestions": suggestions
+    }
 
 
 @router.get("/products/{id}/related", summary="Related Product Recommendations (Placeholder)")

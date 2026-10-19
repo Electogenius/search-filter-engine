@@ -29,10 +29,10 @@ def test_root_endpoint():
     assert "docs" in response.json()
 
 
-def test_placeholder_endpoints_return_501():
-    """Verify suggest and related endpoints return 501 Not Implemented."""
+def test_placeholder_endpoints():
+    """Verify related endpoint returns 501 while implemented suggest endpoint returns 200."""
     suggest_resp = client.get("/api/suggest?prefix=key")
-    assert suggest_resp.status_code == 501
+    assert suggest_resp.status_code == 200
 
     related_resp = client.get("/api/products/prod-001/related")
     assert related_resp.status_code == 501
