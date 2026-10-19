@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Search & Filter Engine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-title">E-Commerce Search Engine</span>
+      <!-- <span class="badge">In-Memory DSA</span> -->
+    </div>
+    <div class="nav-status" id="system-status">
+      <span class="status-indicator"></span>
+      <span class="status-text">Backend: Ready</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Search Bar Section with Autocomplete Container -->
+    <section class="search-section">
+      <div class="search-bar-wrapper">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search products by title, description, or keyword..."
+          autocomplete="off"
+        />
+        <button id="search-btn" type="button">Search</button>
+      </div>
+      <!-- Autocomplete suggestions dropdown (to be populated via GET /api/suggest) -->
+      <div id="autocomplete-box" class="autocomplete-dropdown hidden"></div>
+    </section>
+
+    <!-- Content Area: Sidebar Filters + Search Results Grid -->
+    <div class="layout-grid">
+      <!-- Filter Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>Filters</h3>
+          <button id="reset-filters-btn" class="btn-link" type="button">Reset All</button>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="filter-group">
+          <label for="category-filter">Category</label>
+          <select id="category-filter">
+            <option value="">All Categories</option>
+            <option value="Audio">Audio</option>
+            <option value="Computers">Computers</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Wearables">Wearables</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+        </div>
+
+        <!-- Price Range Filter -->
+        <div class="filter-group">
+          <label>Price Range ($)</label>
+          <div class="price-inputs">
+            <input type="number" id="min-price" placeholder="Min" min="0" step="1">
+            <span>to</span>
+            <input type="number" id="max-price" placeholder="Max" min="0" step="1">
+          </div>
+        </div>
+
+        <!-- Minimum Rating Filter -->
+        <div class="filter-group">
+          <label for="rating-filter">Minimum Rating</label>
+          <select id="rating-filter">
+            <option value="">Any Rating</option>
+            <option value="4.5">★ 4.5 & up</option>
+            <option value="4.0">★ 4.0 & up</option>
+            <option value="3.5">★ 3.5 & up</option>
+          </select>
+        </div>
+
+        <!-- Availability Filter -->
+        <div class="filter-group checkbox-group">
+          <label>
+            <input type="checkbox" id="availability-filter">
+            In-Stock Items Only
+          </label>
+        </div>
+
+        <button id="apply-filters-btn" class="btn-primary" type="button">Apply Filters</button>
+      </aside>
+
+      <!-- Main Results Area -->
+      <section class="results-section">
+        <!-- Results Header Controls -->
+        <div class="results-header">
+          <div id="results-count" class="results-count">No search performed yet</div>
+          <div class="sort-control">
+            <label for="sort-select">Sort By:</label>
+            <select id="sort-select">
+              <option value="relevance">Relevance (BM25)</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating_desc">Rating: High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Results Container -->
+        <!-- NOTE: Search and recommendation results will be dynamically inserted here -->
+        <div id="results-container" class="results-container">
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h4>Catalogue Ready for Search</h4>
+            <p>Enter a query above or apply filters to discover products from the in-memory catalogue.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Product Modal for Co-Occurrence Recommendations (Future Integration) -->
+  <div id="product-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+      <div id="modal-body">
+        <!-- Product details & Related products (GET /api/products/{id}/related) will go here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

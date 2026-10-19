@@ -1,0 +1,43 @@
+[
+  {
+    "basket_id": "b-001",
+    "items": ["prod-001", "prod-002", "prod-016"]
+  },
+  {
+    "basket_id": "b-002",
+    "items": ["prod-001", "prod-002", "prod-010"]
+  },
+  {
+    "basket_id": "b-003",
+    "items": ["prod-003", "prod-011", "prod-012"]
+  },
+  {
+    "basket_id": "b-004",
+    "items": ["prod-006", "prod-001", "prod-017"]
+  },
+  {
+    "basket_id": "b-005",
+    "items": ["prod-008", "prod-009"]
+  },
+  {
+    "basket_id": "b-006",
+    "items": ["prod-001", "prod-010", "prod-014"]
+  },
+  {
+    "basket_id": "b-007",
+    "items": ["prod-003", "prod-004", "prod-005"]
+  },
+  {
+    "basket_id": "b-008",
+    "items": ["prod-015", "prod-018", "prod-016"]
+  },
+  {
+    "basket_id": "b-009",
+    "items": ["prod-006", "prod-007", "prod-010"]
+  },
+  {
+    "basket_id": "b-010",
+    "items": ["prod-002", "prod-016", "prod-010"]
+  }
+]
+
