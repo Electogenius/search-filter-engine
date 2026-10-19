@@ -119,12 +119,15 @@
     </div>
   </main>
 
-  <!-- Product Modal for Co-Occurrence Recommendations (Future Integration) -->
+  <!-- Product Modal for Detailed Fullscreen View -->
   <div id="product-modal" class="modal hidden">
-    <div class="modal-content">
-      <button class="modal-close" id="modal-close-btn">&times;</button>
+    <div class="modal-content" id="modal-container">
+      <div class="modal-header-actions">
+        <button class="modal-btn-icon" id="modal-expand-btn" title="Toggle Fullscreen">⛶</button>
+        <button class="modal-btn-icon" id="modal-close-btn" title="Close">&times;</button>
+      </div>
       <div id="modal-body">
-        <!-- Product details & Related products (GET /api/products/{id}/related) will go here -->
+        <!-- Dynamically rendered product details -->
       </div>
     </div>
   </div>

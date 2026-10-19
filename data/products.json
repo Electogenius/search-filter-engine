@@ -4,7 +4,7 @@
     "title": "Wireless Mechanical Keyboard",
     "description": "Compact mechanical keyboard with hot-swappable switches, RGB backlighting, and dual Bluetooth/USB-C connectivity.",
     "category": "Computers",
-    "price": 89.99,
+    "price": 899.99,
     "rating": 4.7,
     "available": true
   },
@@ -13,7 +13,7 @@
     "title": "Wireless Ergonomic Mouse",
     "description": "Ergonomically contoured vertical mouse engineered to reduce wrist strain, featuring high-precision optical tracking.",
     "category": "Computers",
-    "price": 45.5,
+    "price": 459.5,
     "rating": 4.5,
     "available": true
   },
@@ -22,7 +22,7 @@
     "title": "Wireless Noise-Cancelling Headphones",
     "description": "Over-ear headphones featuring active noise cancellation, 40-hour battery life, and crystal-clear microphone audio.",
     "category": "Audio",
-    "price": 179.99,
+    "price": 1799.99,
     "rating": 4.8,
     "available": true
   },
@@ -31,7 +31,7 @@
     "title": "True Wireless Noise-Cancelling Earbuds",
     "description": "Water-resistant in-ear earbuds with ambient sound passthrough and a compact wireless charging case.",
     "category": "Audio",
-    "price": 119.0,
+    "price": 1199.0,
     "rating": 4.4,
     "available": true
   },
@@ -40,7 +40,7 @@
     "title": "Bluetooth Portable Waterproof Speaker",
     "description": "Rugged outdoor portable speaker with deep bass, 360-degree sound projection, and IPX7 waterproof rating.",
     "category": "Audio",
-    "price": 59.99,
+    "price": 599.99,
     "rating": 4.3,
     "available": false
   },
@@ -49,7 +49,7 @@
     "title": "27-Inch 4K UHD Gaming Monitor",
     "description": "IPS panel monitor with 144Hz refresh rate, 1ms response time, and AMD FreeSync Premium support.",
     "category": "Electronics",
-    "price": 329.99,
+    "price": 3299.99,
     "rating": 4.6,
     "available": true
   },
@@ -58,7 +58,7 @@
     "title": "34-Inch Ultrawide Curved Monitor",
     "description": "Immersive 1500R curved display with 21:9 aspect ratio, HDR400, and integrated USB hub for productive multitasking.",
     "category": "Electronics",
-    "price": 449.5,
+    "price": 4499.5,
     "rating": 4.7,
     "available": true
   },
@@ -67,7 +67,7 @@
     "title": "Ergonomic Mesh Office Chair",
     "description": "Breathable high-back office chair with adjustable lumbar support, 3D armrests, and smooth-rolling casters.",
     "category": "Furniture",
-    "price": 199.0,
+    "price": 1999.0,
     "rating": 4.2,
     "available": true
   },
@@ -76,7 +76,7 @@
     "title": "Motorized Adjustable Standing Desk",
     "description": "Dual-motor height-adjustable desk with memory presets, solid wood desktop, and integrated cable management.",
     "category": "Furniture",
-    "price": 379.0,
+    "price": 3799.0,
     "rating": 4.8,
     "available": false
   },
@@ -85,7 +85,7 @@
     "title": "USB-C Multiport Adapter Hub 8-in-1",
     "description": "Aluminum dongle supporting 4K HDMI output, 100W Power Delivery, SD/TF card reader, and Gigabit Ethernet.",
     "category": "Accessories",
-    "price": 34.99,
+    "price": 349.99,
     "rating": 4.4,
     "available": true
   },
@@ -94,7 +94,7 @@
     "title": "Fast Wireless Charging Pad 15W",
     "description": "Qi-certified ultra-slim fast charger compatible with iOS and Android smartphones, smartwatches, and earbuds.",
     "category": "Accessories",
-    "price": 19.99,
+    "price": 199.99,
     "rating": 4.1,
     "available": true
   },
@@ -103,7 +103,7 @@
     "title": "Smart Fitness Tracker Watch",
     "description": "Fitness smartwatch tracking heart rate, sleep stages, SPO2 levels, and daily exercise with 10-day battery life.",
     "category": "Wearables",
-    "price": 79.95,
+    "price": 799.95,
     "rating": 4.3,
     "available": true
   },
@@ -112,7 +112,7 @@
     "title": "Premium Stainless Steel Smartwatch",
     "description": "Elegantly styled digital watch featuring AMOLED sapphire glass display, cellular connectivity, and GPS navigation.",
     "category": "Wearables",
-    "price": 249.99,
+    "price": 2499.99,
     "rating": 4.6,
     "available": false
   },
@@ -121,7 +121,7 @@
     "title": "Portable External SSD 1TB",
     "description": "Pocket-sized rugged solid-state drive delivering read speeds up to 1050MB/s over USB 3.2 Gen 2.",
     "category": "Computers",
-    "price": 99.99,
+    "price": 999.99,
     "rating": 4.9,
     "available": true
   },
@@ -130,7 +130,7 @@
     "title": "Full HD 1080p Streaming Webcam",
     "description": "Wide-angle webcam with dual noise-reduction microphones, privacy shutter, and autofocus light correction.",
     "category": "Electronics",
-    "price": 49.99,
+    "price": 499.99,
     "rating": 4.3,
     "available": true
   },
@@ -139,7 +139,7 @@
     "title": "Laptop Aluminum Cooling Stand",
     "description": "Elevated ergonomic laptop riser constructed from heat-dissipating aluminum alloy with anti-slip silicone pads.",
     "category": "Accessories",
-    "price": 27.5,
+    "price": 279.5,
     "rating": 4.5,
     "available": true
   },
@@ -148,7 +148,7 @@
     "title": "RGB Mechanical Gaming Keyboard",
     "description": "Linear mechanical switches with per-key RGB illumination, aircraft-grade aluminum frame, and magnetic wrist rest.",
     "category": "Computers",
-    "price": 109.99,
+    "price": 1099.99,
     "rating": 4.6,
     "available": true
   },
@@ -157,7 +157,7 @@
     "title": "Studio Quality USB Condenser Microphone",
     "description": "Cardioid pickup condenser mic designed for podcasting, voiceovers, streaming, and studio recording.",
     "category": "Audio",
-    "price": 84.0,
+    "price": 849.0,
     "rating": 4.7,
     "available": true
   }

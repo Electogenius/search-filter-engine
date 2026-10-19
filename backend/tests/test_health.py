@@ -30,10 +30,7 @@ def test_root_endpoint():
 
 
 def test_placeholder_endpoints_return_501():
-    """Verify placeholder endpoints return 501 Not Implemented and do not mock data."""
-    search_resp = client.get("/api/search?q=keyboard")
-    assert search_resp.status_code == 501
-
+    """Verify suggest and related endpoints return 501 Not Implemented."""
     suggest_resp = client.get("/api/suggest?prefix=key")
     assert suggest_resp.status_code == 501
 

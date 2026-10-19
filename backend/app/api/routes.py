@@ -22,7 +22,13 @@ def health_check() -> dict:
 # ============================================================================
 
 
-@router.get("/search", summary="Search and Filter Products (Placeholder)")
+try:
+    from backend.app.indexing.catalog import get_catalog
+except ModuleNotFoundError:
+    from app.indexing.catalog import get_catalog
+
+
+@router.get("/search", summary="Search and Filter Products")
 def search_products(
     q: Optional[str] = Query(None, description="Search query string"),
     category: Optional[str] = Query(None, description="Category filter"),
@@ -36,15 +42,41 @@ def search_products(
 ) -> dict:
     """Search and filter products across the in-memory catalogue.
 
-    To be implemented using:
-    - Inverted Index & Bloom Filter for candidate retrieval
-    - Okapi BM25 & WAND algorithm for top-k scoring
-    - Levenshtein distance for fuzzy matching
+    Backed by:
+    - AVL-Tree based Inverted Index for text token retrieval
+    - Multi-criteria filtering (category, price range, rating, availability)
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Search endpoint is not implemented yet. Implementation pending search and ranking engine modules."
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid parameter: min_price cannot be greater than max_price."
+        )
+
+    catalog = get_catalog()
+    return catalog.search(
+        q=q,
+        category=category,
+        min_price=min_price,
+        max_price=max_price,
+        min_rating=min_rating,
+        available=available,
+        sort_by=sort_by,
+        limit=limit,
+        offset=offset
     )
+
+
+@router.get("/products/{id}", summary="Get Product Details")
+def get_product(id: str) -> dict:
+    """Fetch complete product details by unique product ID in O(1) time."""
+    catalog = get_catalog()
+    product = catalog.get_by_id(id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id '{id}' not found."
+        )
+    return product
 
 
 @router.get("/suggest", summary="Prefix Autocomplete Suggestions (Placeholder)")
