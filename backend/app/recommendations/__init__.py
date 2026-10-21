@@ -1,7 +1,13 @@
 """Recommendations module.
 
-Planned components:
-- Market basket analyzer and co-occurrence matrix/graph.
-- Associated product recommendation based on purchase co-occurrence frequencies.
+Implementations:
+- CooccurrenceRecommender: In-memory market basket co-occurrence recommender.
 """
+
+try:
+    from backend.app.recommendations.cooccurrence import CooccurrenceRecommender
+except ModuleNotFoundError:
+    from app.recommendations.cooccurrence import CooccurrenceRecommender
+
+__all__ = ["CooccurrenceRecommender"]
 

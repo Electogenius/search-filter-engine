@@ -13,11 +13,17 @@ try:
     from backend.app.data_structures.trie import Trie
     from backend.app.data_structures.bloom_filter import BloomFilter
     from backend.app.search.query_processor import QueryProcessor
+    from backend.app.ranking.bm25 import BM25Scorer
+    from backend.app.ranking.wand import WANDTopK
+    from backend.app.recommendations.cooccurrence import CooccurrenceRecommender
 except ModuleNotFoundError:
     from app.indexing.inverted_index import AVLInvertedIndex
     from app.data_structures.trie import Trie
     from app.data_structures.bloom_filter import BloomFilter
     from app.search.query_processor import QueryProcessor
+    from app.ranking.bm25 import BM25Scorer
+    from app.ranking.wand import WANDTopK
+    from app.recommendations.cooccurrence import CooccurrenceRecommender
 
 
 class ProductCatalog:
@@ -30,6 +36,9 @@ class ProductCatalog:
         self.trie: Trie = Trie()
         self.bloom_filter: Optional[BloomFilter] = None
         self.query_processor: Optional[QueryProcessor] = None
+        self.bm25_scorer: Optional[BM25Scorer] = None
+        self.wand: Optional[WANDTopK] = None
+        self.recommender: Optional[CooccurrenceRecommender] = None
         self._load_and_index()
 
     @staticmethod
@@ -40,6 +49,15 @@ class ProductCatalog:
         if not data_file.exists():
             # Fallback relative to current working directory
             data_file = Path("data/products.json")
+        return data_file
+
+    @staticmethod
+    def _resolve_baskets_path() -> Path:
+        """Locate data/baskets.json relative to repository root."""
+        base_dir = Path(__file__).resolve().parent.parent.parent.parent
+        data_file = base_dir / "data" / "baskets.json"
+        if not data_file.exists():
+            data_file = Path("data/baskets.json")
         return data_file
 
     def _load_and_index(self) -> None:
@@ -94,6 +112,24 @@ class ProductCatalog:
             max_edit_distance=2
         )
 
+        # Initialize Okapi BM25 Scorer and WAND Top-K Pruning Engine
+        self.bm25_scorer = BM25Scorer(
+            corpus=self.products_by_id,
+            tokenizer=self.inverted_index.tokenizer,
+            k1=1.5,
+            b=0.75,
+            title_weight=3,
+            desc_weight=1
+        )
+        self.wand = WANDTopK(bm25_scorer=self.bm25_scorer)
+
+        # Initialize Market Basket Co-Occurrence Recommender
+        baskets_path = self._resolve_baskets_path()
+        self.recommender = CooccurrenceRecommender(
+            baskets_path=baskets_path,
+            products=self.products_by_id
+        )
+
     def suggest(self, prefix: str, limit: int = 5) -> List[str]:
         """Provide real-time prefix completion suggestions using the Trie in O(L) time."""
         return self.trie.search_prefix(prefix=prefix, limit=limit)
@@ -101,6 +137,25 @@ class ProductCatalog:
     def get_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
         """Look up product details by unique product ID in O(1) time."""
         return self.products_by_id.get(product_id)
+
+    def get_recommendations(
+        self,
+        product_id: str,
+        limit: int = 4
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Fetch market basket co-occurrence recommendations for a product."""
+        if product_id not in self.products_by_id:
+            return None
+        if not self.recommender:
+            return []
+        return self.recommender.get_recommendations(product_id, limit=limit)
+
+    def wand_search(self, query: str, k: int = 10) -> List[Any]:
+        """Run pure WAND top-k candidate pruning for a query."""
+        if not self.wand:
+            return []
+        tokens = self.inverted_index.tokenizer.tokenize(query)
+        return self.wand.search(tokens, k=k)
 
     def search(
         self,
@@ -130,8 +185,12 @@ class ProductCatalog:
         matched_scores: Dict[str, float] = {}
 
         if search_query_str:
-            # Query terms lookup via AVL inverted index
-            matched_scores = self.inverted_index.search_query(search_query_str)
+            # Compute Okapi BM25 relevance scores across matching candidates
+            tokens = self.inverted_index.tokenizer.tokenize(search_query_str)
+            if self.bm25_scorer:
+                matched_scores = self.bm25_scorer.score_all_candidates(tokens)
+            else:
+                matched_scores = self.inverted_index.search_query(search_query_str)
             candidate_ids = list(matched_scores.keys())
         else:
             # No text query specified: all products are candidates

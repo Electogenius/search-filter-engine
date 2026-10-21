@@ -66,7 +66,7 @@ async function checkBackendHealth() {
  */
 async function handleSearch(forcedQuery = null, autoCorrect = true) {
   closeAutocomplete();
-  if (forcedQuery !== null) {
+  if (typeof forcedQuery === "string") {
     searchInput.value = forcedQuery;
   }
   const query = searchInput.value.trim();
@@ -193,7 +193,7 @@ function renderSearchResults(data) {
     const stockClass = product.available ? "in-stock" : "out-of-stock";
     const stockLabel = product.available ? "In Stock" : "Out of Stock";
     const scoreBadge = product.score !== undefined
-      ? `<span class="score-badge" title="Coordinate AVL term score">Score: ${product.score}</span>`
+      ? `<span class="score-badge" title="Okapi BM25 relevance score">BM25: ${Number(product.score).toFixed(3)}</span>`
       : "";
 
     card.innerHTML = `
@@ -245,8 +245,8 @@ function openFullscreenModal(product) {
   const stockLabel = product.available ? "In Stock & Ready to Ship" : "Currently Out of Stock";
   const scoreHtml = product.score !== undefined
     ? `<div class="modal-dsa-info">
-        <strong>⚡ AVL Index Retrieval Info:</strong> Matched query with relevance score of 
-        <code>${product.score}</code> based on token frequency weighting.
+        <strong>⚡ Okapi BM25 & WAND Scoring:</strong> Matched query with BM25 relevance score of 
+        <code>${Number(product.score).toFixed(4)}</code> (evaluated with dynamic WAND top-k candidate pruning).
        </div>`
     : "";
 
@@ -270,6 +270,15 @@ function openFullscreenModal(product) {
 
     ${scoreHtml}
 
+    <div class="modal-recommendations-section">
+      <div class="recommendations-header">
+        <h4>🤝 Frequently Bought Together</h4>
+      </div>
+      <div id="modal-recommendations-container">
+        <p class="rec-empty-note">Finding related items from transaction history...</p>
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn-primary" id="modal-action-close" type="button" style="width: auto; padding: 0.6rem 1.5rem;">
         Close View
@@ -283,8 +292,81 @@ function openFullscreenModal(product) {
     innerCloseBtn.addEventListener("click", closeModal);
   }
 
+  // Load co-occurrence recommendations
+  loadProductRecommendations(product.id);
+
   productModal.classList.remove("hidden");
   document.body.style.overflow = "hidden"; // Prevent background scroll
+}
+
+/**
+ * Fetch and render market basket co-occurrence recommendations inside the modal.
+ */
+async function loadProductRecommendations(productId) {
+  const container = document.getElementById("modal-recommendations-container");
+  if (!container) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${encodeURIComponent(productId)}/related?limit=4`);
+    if (!response.ok) {
+      container.innerHTML = `<p class="rec-empty-note">No co-occurrence recommendations available.</p>`;
+      return;
+    }
+
+    const data = await response.json();
+    const recommendations = data.recommendations || [];
+
+    if (recommendations.length === 0) {
+      container.innerHTML = `<p class="rec-empty-note">No transaction co-occurrences found for this item yet.</p>`;
+      return;
+    }
+
+    const recGrid = document.createElement("div");
+    recGrid.className = "recommendations-grid";
+
+    recommendations.forEach(rec => {
+      const card = document.createElement("div");
+      card.className = "rec-card";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+
+      card.innerHTML = `
+        <div>
+          <span class="category-tag" style="margin-bottom: 0.35rem; font-size: 0.65rem;">${escapeHtml(rec.category)}</span>
+          <div class="rec-card-title">${escapeHtml(rec.title)}</div>
+        </div>
+        <div>
+          <div class="rec-card-meta">
+            <span class="rec-card-price">₹${Number(rec.price).toFixed(2)}</span>
+            <span class="rec-card-rating">★ ${Number(rec.rating).toFixed(1)}</span>
+          </div>
+          <div class="rec-cooccurrence-badge">
+            Co-purchased ${rec.co_occurrence_count}×
+          </div>
+        </div>
+      `;
+
+      const openRec = () => {
+        openFullscreenModal(rec);
+      };
+
+      card.addEventListener("click", openRec);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openRec();
+        }
+      });
+
+      recGrid.appendChild(card);
+    });
+
+    container.innerHTML = "";
+    container.appendChild(recGrid);
+  } catch (err) {
+    console.error("Failed to load recommendations:", err);
+    container.innerHTML = `<p class="rec-empty-note">Unable to load recommendations at this time.</p>`;
+  }
 }
 
 function closeModal() {
@@ -429,8 +511,8 @@ searchInput.addEventListener("keydown", (e) => {
 });
 
 searchInput.addEventListener("input", handleAutocomplete);
-applyFiltersBtn.addEventListener("click", handleSearch);
-sortSelect.addEventListener("change", handleSearch);
+applyFiltersBtn.addEventListener("click", () => handleSearch());
+sortSelect.addEventListener("change", () => handleSearch());
 
 resetFiltersBtn.addEventListener("click", () => {
   categoryFilter.value = "";

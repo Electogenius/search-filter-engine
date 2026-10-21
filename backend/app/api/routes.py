@@ -103,18 +103,25 @@ def autocomplete_suggestions(
     }
 
 
-@router.get("/products/{id}/related", summary="Related Product Recommendations (Placeholder)")
+@router.get("/products/{id}/related", summary="Related Product Recommendations")
 def get_related_products(
     id: str,
     limit: int = Query(4, ge=1, le=10, description="Max related products to return"),
 ) -> dict:
     """Recommend products based on market basket co-occurrence statistics.
 
-    To be implemented using:
-    - Co-occurrence matrix / graph calculated from baskets.json
+    Backed by:
+    - In-memory symmetric co-occurrence matrix constructed from baskets.json
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Product recommendations endpoint is not implemented yet. Implementation pending recommendation module."
-    )
+    catalog = get_catalog()
+    recommendations = catalog.get_recommendations(product_id=id, limit=limit)
+    if recommendations is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with id '{id}' not found."
+        )
+    return {
+        "product_id": id,
+        "recommendations": recommendations
+    }
 
