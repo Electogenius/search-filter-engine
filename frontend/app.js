@@ -22,6 +22,7 @@ const resetFiltersBtn = document.getElementById("reset-filters-btn");
 const sortSelect = document.getElementById("sort-select");
 const resultsContainer = document.getElementById("results-container");
 const resultsCount = document.getElementById("results-count");
+const correctionBanner = document.getElementById("correction-banner");
 const systemStatusText = document.querySelector("#system-status .status-text");
 
 // Modal Element References
@@ -59,9 +60,15 @@ async function checkBackendHealth() {
 /**
  * Gather active query and filter values, query the backend search endpoint,
  * and render the resulting product cards.
+ *
+ * @param {string|null} forcedQuery - Explicit query string override.
+ * @param {boolean} autoCorrect - Whether to enable typo correction via Bloom Filter & Levenshtein DP.
  */
-async function handleSearch() {
+async function handleSearch(forcedQuery = null, autoCorrect = true) {
   closeAutocomplete();
+  if (forcedQuery !== null) {
+    searchInput.value = forcedQuery;
+  }
   const query = searchInput.value.trim();
   const category = categoryFilter.value;
   const minPrice = minPriceInput.value;
@@ -79,13 +86,14 @@ async function handleSearch() {
   if (minRating) params.append("min_rating", minRating);
   if (availableOnly) params.append("available", "true");
   if (sortBy) params.append("sort_by", sortBy);
+  if (!autoCorrect) params.append("auto_correct", "false");
   params.append("limit", "50");
 
   resultsContainer.innerHTML = `
     <div class="empty-state">
       <div class="empty-icon">⏳</div>
       <h4>Searching In-Memory Catalogue...</h4>
-      <p>Querying AVL Inverted Index and evaluating filters.</p>
+      <p>Querying AVL Inverted Index, Bloom Filter, and evaluating filters.</p>
     </div>
   `;
 
@@ -99,6 +107,10 @@ async function handleSearch() {
     const data = await response.json();
     renderSearchResults(data);
   } catch (error) {
+    if (correctionBanner) {
+      correctionBanner.classList.add("hidden");
+      correctionBanner.innerHTML = "";
+    }
     resultsContainer.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">⚠️</div>
@@ -117,10 +129,37 @@ function renderSearchResults(data) {
   const results = data.results || [];
   const total = data.total || 0;
   const query = data.query || "";
+  const correctedQuery = data.corrected_query || null;
 
   // Update in-memory map for fast modal lookup
   currentResultsMap.clear();
   results.forEach(product => currentResultsMap.set(product.id, product));
+
+  // Render "Did You Mean: ...?" / Typo correction banner
+  if (correctionBanner) {
+    if (correctedQuery && correctedQuery.toLowerCase() !== query.toLowerCase()) {
+      correctionBanner.innerHTML = `
+        <div class="correction-content">
+          <span class="correction-icon">💡</span>
+          <span class="correction-text">
+            Showing results for <strong>${escapeHtml(correctedQuery)}</strong>.
+            Search instead for <button type="button" id="search-original-btn" class="correction-link"><em>${escapeHtml(query)}</em></button>?
+          </span>
+        </div>
+      `;
+      correctionBanner.classList.remove("hidden");
+
+      const searchOriginalBtn = document.getElementById("search-original-btn");
+      if (searchOriginalBtn) {
+        searchOriginalBtn.addEventListener("click", () => {
+          handleSearch(query, false);
+        });
+      }
+    } else {
+      correctionBanner.classList.add("hidden");
+      correctionBanner.innerHTML = "";
+    }
+  }
 
   // Update results count header
   if (total === 0) {
@@ -137,8 +176,9 @@ function renderSearchResults(data) {
     return;
   }
 
-  resultsCount.textContent = query
-    ? `Showing ${results.length} of ${total} match${total === 1 ? '' : 'es'} for "${query}" (AVL Index)`
+  const queryLabel = correctedQuery || query;
+  resultsCount.textContent = queryLabel
+    ? `Showing ${results.length} of ${total} match${total === 1 ? '' : 'es'} for "${queryLabel}" (AVL Index)`
     : `Showing ${results.length} of ${total} products`;
 
   const grid = document.createElement("div");
@@ -167,7 +207,7 @@ function renderSearchResults(data) {
       </div>
       <div>
         <div class="card-meta">
-          <span class="card-price">$${Number(product.price).toFixed(2)}</span>
+          <span class="card-price">₹${Number(product.price).toFixed(2)}</span>
           <span class="card-rating">★ ${Number(product.rating).toFixed(1)}</span>
         </div>
         <div class="card-footer">
@@ -221,7 +261,7 @@ function openFullscreenModal(product) {
     </div>
 
     <div class="modal-price-rating-row">
-      <div class="modal-price">$${Number(product.price).toFixed(2)}</div>
+      <div class="modal-price">₹${Number(product.price).toFixed(2)}</div>
       <div class="modal-rating">★ ${Number(product.rating).toFixed(1)} / 5.0 Rating</div>
     </div>
 
@@ -400,6 +440,10 @@ resetFiltersBtn.addEventListener("click", () => {
   availabilityFilter.checked = false;
   sortSelect.value = "relevance";
   searchInput.value = "";
+  if (correctionBanner) {
+    correctionBanner.classList.add("hidden");
+    correctionBanner.innerHTML = "";
+  }
   closeAutocomplete();
   handleSearch();
 });

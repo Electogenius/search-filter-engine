@@ -256,6 +256,61 @@ body {
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* Did You Mean / Typo Correction Banner */
+.correction-banner {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.correction-banner.hidden {
+  display: none;
+}
+
+.correction-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: #1e40af;
+}
+
+.correction-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.correction-text {
+  line-height: 1.5;
+}
+
+.correction-text strong {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.correction-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: inline;
+}
+
+.correction-link:hover {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
 .results-count {
   font-size: 0.95rem;
   font-weight: 500;

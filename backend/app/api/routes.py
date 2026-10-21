@@ -39,11 +39,14 @@ def search_products(
     sort_by: str = Query("relevance", description="Sort order: relevance, price_asc, price_desc, rating_desc"),
     limit: int = Query(10, ge=1, le=50, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
+    auto_correct: bool = Query(True, description="Enable typo correction via Bloom Filter and Levenshtein DP"),
 ) -> dict:
     """Search and filter products across the in-memory catalogue.
 
     Backed by:
     - AVL-Tree based Inverted Index for text token retrieval
+    - Bloom Filter fast-rejection with 0% false negatives
+    - Levenshtein DP for typo detection and correction
     - Multi-criteria filtering (category, price range, rating, availability)
     """
     if min_price is not None and max_price is not None and min_price > max_price:
@@ -62,7 +65,8 @@ def search_products(
         available=available,
         sort_by=sort_by,
         limit=limit,
-        offset=offset
+        offset=offset,
+        auto_correct=auto_correct,
     )
 
 

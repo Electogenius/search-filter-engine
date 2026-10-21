@@ -11,19 +11,25 @@ from typing import Any, Dict, List, Optional
 try:
     from backend.app.indexing.inverted_index import AVLInvertedIndex
     from backend.app.data_structures.trie import Trie
+    from backend.app.data_structures.bloom_filter import BloomFilter
+    from backend.app.search.query_processor import QueryProcessor
 except ModuleNotFoundError:
     from app.indexing.inverted_index import AVLInvertedIndex
     from app.data_structures.trie import Trie
+    from app.data_structures.bloom_filter import BloomFilter
+    from app.search.query_processor import QueryProcessor
 
 
 class ProductCatalog:
-    """In-memory catalogue storing product records, the AVL inverted index, and prefix Trie."""
+    """In-memory catalogue storing product records, the AVL inverted index, Bloom Filter, and prefix Trie."""
 
     def __init__(self, data_path: Optional[Path] = None):
         self.data_path: Path = data_path or self._resolve_data_path()
         self.products_by_id: Dict[str, Dict[str, Any]] = {}
         self.inverted_index: AVLInvertedIndex = AVLInvertedIndex()
         self.trie: Trie = Trie()
+        self.bloom_filter: Optional[BloomFilter] = None
+        self.query_processor: Optional[QueryProcessor] = None
         self._load_and_index()
 
     @staticmethod
@@ -61,8 +67,32 @@ class ProductCatalog:
                 self.trie.insert(title.lower(), payload={"title": title.lower(), "frequency": 10})
 
         # Feed all unique vocabulary tokens from inverted index into Trie
-        for term in self.inverted_index.get_vocabulary():
+        vocab = self.inverted_index.get_vocabulary()
+        for term in vocab:
             self.trie.insert(term.lower(), payload={"title": term.lower(), "frequency": 1})
+
+        # Calculate optimal m = -n*lnp/(ln 2)^2 and k = (m/n) ln 2 for target p=0.01
+        expected_n = max(len(vocab), 100)
+        self.bloom_filter = BloomFilter(
+            expected_elements=expected_n,
+            false_positive_rate=0.01
+        )
+
+        # Populate Bloom Filter with all indexed dictionary tokens at startup
+        vocab_freqs: Dict[str, int] = {}
+        for term in vocab:
+            normalized_term = term.lower()
+            self.bloom_filter.add(normalized_term)
+            postings = self.inverted_index.lookup_term(normalized_term)
+            vocab_freqs[normalized_term] = sum(postings.values()) if postings else 1
+
+        # Initialize QueryProcessor with Bloom Filter fast rejection and Levenshtein DP
+        self.query_processor = QueryProcessor(
+            bloom_filter=self.bloom_filter,
+            vocabulary=vocab_freqs,
+            tokenizer=self.inverted_index.tokenizer,
+            max_edit_distance=2
+        )
 
     def suggest(self, prefix: str, limit: int = 5) -> List[str]:
         """Provide real-time prefix completion suggestions using the Trie in O(L) time."""
@@ -83,14 +113,25 @@ class ProductCatalog:
         sort_by: str = "relevance",
         limit: int = 10,
         offset: int = 0,
+        auto_correct: bool = True,
     ) -> Dict[str, Any]:
         """Perform search with query matching against AVL inverted index and apply filters."""
-        query_str = (q or "").strip()
+        raw_query = (q or "").strip()
+        corrected_query: Optional[str] = None
+        search_query_str = raw_query
+
+        # Search Pipeline: Bloom filter fast rejection + Levenshtein spelling correction
+        if raw_query and auto_correct and self.query_processor:
+            proc_res = self.query_processor.process_query(raw_query)
+            if proc_res.get("corrected"):
+                corrected_query = proc_res.get("corrected_query")
+                search_query_str = proc_res.get("effective_query", raw_query)
+
         matched_scores: Dict[str, float] = {}
 
-        if query_str:
+        if search_query_str:
             # Query terms lookup via AVL inverted index
-            matched_scores = self.inverted_index.search_query(query_str)
+            matched_scores = self.inverted_index.search_query(search_query_str)
             candidate_ids = list(matched_scores.keys())
         else:
             # No text query specified: all products are candidates
@@ -127,7 +168,7 @@ class ProductCatalog:
 
             # Attach match score if text query was evaluated
             item_copy = dict(prod)
-            if query_str and pid in matched_scores:
+            if search_query_str and pid in matched_scores:
                 item_copy["score"] = matched_scores[pid]
 
             filtered_results.append(item_copy)
@@ -141,7 +182,7 @@ class ProductCatalog:
             filtered_results.sort(key=lambda x: (-x.get("rating", 0.0), x.get("price", 0.0)))
         else:
             # Default "relevance" sort: if text score present, sort by score descending, else rating
-            if query_str:
+            if search_query_str:
                 filtered_results.sort(key=lambda x: (-x.get("score", 0.0), -x.get("rating", 0.0)))
             else:
                 filtered_results.sort(key=lambda x: (-x.get("rating", 0.0), x.get("price", 0.0)))
@@ -149,13 +190,17 @@ class ProductCatalog:
         total_matches = len(filtered_results)
         paginated_results = filtered_results[offset: offset + limit]
 
-        return {
-            "query": query_str,
+        response: Dict[str, Any] = {
+            "query": raw_query,
             "total": total_matches,
             "limit": limit,
             "offset": offset,
             "results": paginated_results
         }
+        if corrected_query:
+            response["corrected_query"] = corrected_query
+
+        return response
 
 
 # Global singleton instance

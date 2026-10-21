@@ -60,7 +60,7 @@
 
         <!-- Price Range Filter -->
         <div class="filter-group">
-          <label>Price Range ($)</label>
+          <label>Price Range (₹)</label>
           <div class="price-inputs">
             <input type="number" id="min-price" placeholder="Min" min="0" step="1">
             <span>to</span>
@@ -105,6 +105,9 @@
             </select>
           </div>
         </div>
+
+        <!-- Did You Mean / Typo Correction Banner -->
+        <div id="correction-banner" class="correction-banner hidden" role="alert"></div>
 
         <!-- Dynamic Results Container -->
         <!-- NOTE: Search and recommendation results will be dynamically inserted here -->
